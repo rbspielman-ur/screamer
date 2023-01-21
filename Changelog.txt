@@ -1,0 +1,549 @@
+Unified version of SCREAMER - UNIX, Macintosh and PC versions
+
+V4.4.3 - 2023-01-12 - Plan to add a classical diode model to the code. The input will have the IV trace of the HV diode used with 6 input pairs and assuming 0,0.
+- zdemparm.h - changed all code references from diode to sdiode (Slutz ion diode) to clear the way for a new variable named diode
+- rdscrelem.f -  changed all references from diode to sdiode to clear the way for a new variable names diode
+- rdscrelem.f - changed flag1 to flag on line 2356 to fix a typo.
+- model.f - changed the single reference to diode to sdiode
+- diode.f - renamed to sdiode.f
+- rdscrdat.f modified to increase flagxx from flag10 to flag12, declaration and common
+- rdscrelem.f changed to include the diode model and to read in 6 pairs of points on the same line.
+- diodemdl.f created and completed to model a 6 region, 6 point diode, including 0,0.
+- diode_model_test.txt run deck was created to test the new diode model.
+- The Screamer manual was updated to include the diode model in two places.
+- Update the version.h to 4.4.3
+
+
+V4.4.2 - 2020-02-12 - Added a resistive model for warm conductors. This will take the classic shape of the solid resistivities as a function of action.
+- zdemparm.h - added command information for RCOND in both character and integer locations of variable elements.
+- rdscrelem.f – added new variable resistor option for RCOND by starting with a duplicate of R2wall.
+- rdscrelem.f – completely updated the IF indents and added comments for clarity.
+- models.f - added a new model call for RCOND immediately after RSKIN. The model allows for R1 and R2 variable elements.
+- rcondmdl.f - created a new RCOND model. This is based roughly on the R2WALL framework. The initial version is a simple set of linear resistances with melt start and melt finish as inflections.
+- thmswmdl - Vyaas G. found a bug with the radius output, I sent the radius to radch1 that was already in common. Bug is fixed.
+
+V4.4.1 - 2019-12-12 - Single line run commands for batch added back to the parallel version
+- Successfully built static versions of Screamer for sequential and parallel versions. This will be the standard build for Screamer going forward.
+- Screamer has been 64 bit for several years now and all past 32-bit versions are deprecated.
+- The Screamer executable will be changed from screamer64 to screamer in the next release.
+
+V4.4 - 2019-12-01 - Implement new improved solver with parallel options built in.
+- Changes to the solver subroutines - many. See publication by Gryazin and Spielman.
+- mkufofl.f - Increased the label length from 22 to 25, using labels longer than 25 characters will result in odd output behavior.
+- The choice of the number of threads is now manually inputted during the initial code operation. For batch jobs that information must be included on the cammand line.
+- Added output of node total in the node check section in start_run.f
+
+V4.3.3 - 2019-04-05 - The only purpose of this revision is to replace the .ufo output extension with a .txt extension.
+- The only change is in mkufofl.f where the file name is changed from ".ufo" to "_d.txt". Here we need to add the _d data specifier to separate the output from the input run deck.
+- The simplest way to make this backward compatible was to leave the old ufo print command and add an identical command for TXT. This adds a new command but leaves old run decks with ufo calls working. Will have to change the zdempprm.h file to have a new command. Read the command in rdscrouts.f.
+- Later we will have to clean up the ufo nomenclature.
+
+V4.3.2 - The only purpose of this revision is to append the input file name to the same command line that call Screamer.
+- zdem.for – replaced the initial write "type input run file:" and the following read with the get_command_argument to be able to pass the input file name on the same command line as the ./screamer64
+- getenvvar.f – Made the passed character inpfile the same as the variable in the calling routine.
+- banner_start.f – Added ifile, clen as passed variables. Added writes for computer name and user name. Added write for inpout file name. Added write for current working directory
+
+V4.3.1 - The only purpose of this revision is to add column scaling to the output.
+- zdempprm.h – Added two parameters: halfstep and scale
+- rdscrelem.f – Corrected a typo in lines 1605 and 1606 where nvarl was written nvar1.
+- zdemclr1 – Add include 'zdemout' and init scale_out array
+- zdemout.h – Add real variable scale_out declared to the same array size as the output data variables
+- rdscrouts.f –  Added scale keyword test, and inputted scale_out
+- mkufofl.f – Added a scale_out multiplier to the print outdata loop. Increased the length of the lblout to 22 from 16
+- mkcsvfl.f – Increased label length from 12 to 22. Added output scaling to the final write statement
+- mkfilfl.f – Removed write format statements. Added a scale_out multiplier to the print outdata loop
+
+V4.3
+*This is a revision of 4.2.7.1 with no changes in the code. This version changes the compiling approach and does a full compile only using gFortran.
+*The only changes were the complete removal of the writebuffer c++ subroutine and making zdem.f the main program, removing the subroutine line and replacing the return with a stop.
+*The read file name information is placed in zdem.for rather than the deprecated c++ shell.
+*I get an IEEE underflow warning. Seems unavoidable.
+*In rdscrelem.f, Corrected a typo in lines 1605 and 1606 where nvarl was written nvar1.
+*In rstmitl.f, removed the unused variables cup and cdn from the declaration and the zflow section.
+*In ediodemdl.f, gap_1 removed from the real declaration. Not used.
+*An error shows up in the debug mode in which the string text is tested for a length greater than 120. This is due to the use of "do while" command that allows a test with start > 120. Don't know how to fix right now.
+
+V4.2.7.1
+* V4.2.7 rstmitl.f and mkufofl.f were copied from V4.2.7 to V4.2.7.1
+* Fixed a problem involving multiple resistor tables. The itabnum pointer in redscrelem.f was initialized each time the routine was called leading to the last table entry overwriting all prior entries. I placed itabnum in common in zdemcomm.h, initialized itabnum in start_run.f. I removed the internal declaration of itabnum in rdscrelem.f and removed the initialization of itabnum in rdscrelem.f. Things now work perfectly. Routines changed: zdemcomm.h, start_run.f, rdscrelem.f.
+
+V4.2.7 MITL code mods
+* Increased the max number of data columns in the ufo (text) output to 150 from 120.
+* Minor modification to ediodemdl.f to get a better value of vt by including both anode and cathode plasma motion. Causes a slightly lower value of the diode impedance as a function of time.
+* Fixed the rsmitl.f to prevent negative loss current as this is not physically possible. We are now correctly measuring the current only through that node's conductance. We sum the losses in the nodes in a given MITL segment where the number of nodes is set by the TL resolution. The Zflow section in rstmitl.f is incorrect and is not used.
+* Corrected the length of the element section from tau to tresline in rstmilt.f. This error gave loss current densities that were MUCH too large.
+* Noted that the average current calculations in rsmitl.f in lines 126-128 should each be divided by 2. The present calculation basically gives a nodal and time step averaged current that is 4X too large. Add 0.5 in all three lines.
+*Removed the extra 0.0625 (1/16) from con1 that effectively added the constants from the current averaging that are now explicit.
+* in rsmitl.f I reset the anode loss current.
+* In rstmitl.f now calculates and outputs both the total loss current per MITL TL and the total loss current density.
+* Increased max_elem_parms to 12 for MITL current output
+* Increased max_iin_specs from 5 to 12 to match max_elem_parms used in zdemcomm.h to set the array size of iin
+* zdemmax.h - the max number of branches increased to 250.
+* Increased the max number of data columns in the ufo (text) output to 200 from 150.
+
+V4.2.6 Minor cleanup throughout the code 
+* Increased the length of the lblout to 16 from 12 in mkufofl.f (note label length restricted by need for a space in the actual label.
+* Increased the max number of data columns in the ufo output to 120 from 100.
+* settrlin.f renamed to settrline.f
+*Removed the enhancement of uhalf in ediodemdl.f. This was an error on my part.
+*Initialized several variables in rdscrelem.f in the var_model for the electron beam diode model call. This was for good programming practices. There could be a problem in pathologicvsl cases.
+
+V4.2.5 Replace Spielman version of the rskinmdl.f with the Gryazin version of rskinmdl.f.
+* Replaced the subroutine for time-domaine skin depth developed in V4.2.3. The run time decreases by > 100X.
+* the subroutine rskinmdl.f uses clean double precision math for calculating the magnetic field.
+* updated the ediode mdl fixing a number of typos and getting a better gap closure behavior
+
+V4.2.4 Make labels for outputs upper and lower case not just upper case
+* Added a new variable currline_lc in rdscrdat.h. currline_lc has length *120 just like currline and is also placed in common with currline.
+* In get_next-line we need to copy currline into currline_lc so there is a copy of currline that is not converted to upper case.
+* In rdscrout at line 957 we needed to use currline_lc to define the label not currline.
+* In get_next_line we need to pass both currline and currline_lc and add the character definition in that subroutine. Get_next_line is called in rdlsfprm.f, rdpw3prm.f, rdpwlprm.f, rdscrdat.f, rdscrelem.f  (many places), rdscrparm.f, rdtbl.f, and rdvector.f. The list of passed variables must be changed to include currline_lc.
+* Fixed errors in passed variable declarations in rdlsfparm.f.
+
+V4.2.3 Add a skin depth model
+* We are adding a time-domain skin depth model based on the erf solution to the magnetic diffusion equation. This will be built into a variable resistor model. It will be designed to work only with R2 resistors. Initially, we will use only RLSeries elements but there is no reason that this cannot be extended to the TL model. We will limit the code to 65 variable elements (This is a limit to the TL model due ot the desire to have high temporal resolution.)
+* Planned changes are to rdscrelem.f (reads in the new command line R_skin), model.f (that calls the actual skin depth subroutine), a NEW subroutine r_skin.f (that has the skin depth calculation that calculates the average resistance). There will be new arrays added to zdemcomm.h and new max values for the new arrays (as needed) that will be located in zdemmax.h.
+* We will use the existing var_model common array to pass fixed problem parameters.
+* We will create a new array zi_old to hold the prior value of the step current. This array is over written every time step. This array is in common. It needs to be dimensioned  with max_var_elements.
+* We will create a new array H_field in common to hold the values of H as a function of depth. This array will be dimensioned with max_skin_points.
+
+Changes:
+1. Added max_skin_points = 100 to zdemmax.h.
+2. Added timepts = 20,001 to zdemmax.h.
+3. Added dcurr to zdemcomm.h
+4. Added H_field to zdemcomm.h.
+5. Added rskin_model and k_rskin_model to zdemparm.h.
+6. Added new variable resistor model Rskin to rdscrelem.f.
+7. Added new rskin model to model.f.
+8. Created a new model, rskinmdl.f that calculates the skin resistance. The calculated value of skin_depth is not saved at this time.
+9. Modified mkufofl.f to reduce the leading space in the header and data lines to one space or less. This gives no extra column when reading the file with a space deliminated reader. 2 or greater spaces to create a new column.
+
+
+V4.2.2 Completing the DPF Model
+* 2016-12-29 - I am checking the DPF model based on comments from Mark Savage. There was a divide by zero error when theta was 0.0 that was fixed in rdscrelem by limiting theta to 0.1 degree. Modified dpfmdl.f and replaced the running mass calculator. There was an error in the original calculation.
+* This version adds an angled axial sheath and shear along the sheath. This reduces the inductance as a function of axial sheath position in the inner radius and decreases the sheath mass due to shear mass loss.
+* Continue to note: Several parameters are defined in zdempprm.h that are not calculated. These values are also in the manual. They are never carefully defined nor are they used anywhere in Screamer. pcdot, ecdot, pccon, eccon, pldot, eldot, plcon, elcon.
+
+Changes:
+1. Changed rdscrelem.f to add the input parameter theta, the sheath angle, to the inputs. Theta is input in degrees and converted to radians. Theta was not in the beta version of the DPF solver in V4.2.
+2. Modify dpfprm.f to include the new theta input parameter. This required renumbering all of the other input and output parameters. We now have 26 parms.
+3. Modify dpfmdl.f to include an angled sheath in the calculation of inductance and accreted mass. Calculate the shear velocity and the fraction of mass lost per time step. I used a nmerical solver to do the integral for inducatance and mass rather than solving the trig integral. This allows me to change the sheath profile in the future in a simple way.
+4. Wrote dpf_model_test.txt to test the solver. I was able to demonstrate the effect of sheath angle on the shape of the current waveform prior to the radial stagnation.
+5. The radial stagnation uses a fractional input mass plus accretion of the static fill. The length is fixed in the model to 2 cm in dpfprm.f. The model has no shear in the radial implosion.
+
+
+V4.2.1 Adding the ediode model
+* This version will implement the Roy model in a variable resistor model to calculate the current in an e-beam and the gap closure.
+* Continue to note: Several parameters are defined in zdempprm.h that are not calculated. These values are also in the manual. They are never carefully defined nor are they used anywhere in Screamer. pcdot, ecdot, pccon, eccon, pldot, eldot, plcon, elcon.
+
+Changes:
+1. Added ediode_model to zdemparm.h.
+2. Added ediode_model to models.f.
+3. Added ediode_model to readscrelem.f.
+4. Created ediodemdl.f
+
+
+V4.2 Non - Release version - Extended max_nodes to memory limit - DPF
+* This version includes all of the memory/array enhancements as 4.1.4.1
+* This version fixes the definition of bgin and final to get the run times correctly.
+* This non-release version has a working DPF model with a sheath normal to the velocity.
+
+Changes:
+1. Changed the definition of bgin in banner_start.f
+2. Changed the definition of final in end_run.f
+3. Updated the version number in version.h.
+4. Cleaned up the write formats in main_loop.f.
+5. Parameter pi removed from findzflo.f subroutine CubicRoots.f
+6. Cleaned up a single write format statement in rdpw3prm.f
+7. Cleaned up a single write format statement in rdpwlprm.f
+8. Cleaned up a single write format statement in write_outs.f
+9. Cleaned up a single write format statement in zflssmdl.f
+10. Cleaned up two write format statements in strpblnk.f
+
+11. Restructured zdempprm.h with the parameters in order so that it is easier to understand. I still do not understand the impact of the integer parameters.
+12. Changing the file names of the output functions: chargc1.f to chargec1.f, crrntr1.f to currentr1.f, crrntin to currentin.f, crrntout.f to currentout.f, enrgyc1.f to energyc1.f, enrgyl2 to energyl2.f, voltgblk.f to voltageblk.f,voltgr2.f to voltager2.f. I also cleaned up some comment lines in these functions at the same time. Very minor stuff.
+13. Noted that several parameters are defined in zdempprm.h that are not calculated. These values are also in the manual. They are never carefully defined nor are they used anywhere in Screamer. pcdot, ecdot, pccon, eccon, pldot, eldot, plcon, elcon.
+
+14. Created two new subroutines: dpfmdl.f and dpfparm.f.
+15. Modified zdemparm.h to include “dpfblock” as an allowed run deck element.
+16. Modified rdscrelem.f to include the DPF model call. The new model call immediately follows the gas puff model.
+17. Note: gaspfprm.f uses a TRICKY programming technique. Params is passed as params(*) and nparms is passed from rdscrelem.f. The value of nparms is the size of the part of parms that contains new input information. The actual array size of params is much larger. The value of the useful (used) size of the array is changed in the subroutine. This is OK but tricky. We will carefully watch the array pointers.
+18. Added the dpf model to models.f that actually connects the model to the node values of Screamer.
+19. Increased max_print_points to 20,001 in zdemmax.h.
+
+
+Completed benchmark runs.
+
+NOTE: At this point nshell_test.txt still fails. Need for fix for next maintenance revision.
+
+
+V4.1.4.1 2015-12-26 Beta Version max_nodes upgrade only
+Yury Gryazin completed this task
+
+Note: the presence of a static array declaration in the main_loop.f and sol ver_screamer_matrix.f subroutines can cause a problem as these array declarations are defined EVERYTIME the subroutines are called.
+
+*Placed the real*8 arrays back in common after defining them in zdemwork.h.
+
+Screamer V4.1.4.1 benchmarked against al_06_36branch.txt with the  default resolution of the TL’s set to 0.5 ns. This will result in a number of nodes greater than 18K. Screamer runs just fine.
+
+
+
+V4.1.4 2015-06-18 Maintenance Update - Pointer review
+* The point of this general variable review is to obliquely address the pointer limit in main_loop.f. When I set max_nodes > 8190 I run into a signed 32-bit integer limit during compile. I don’t know which pointer is involved.
+* I am also carefully applying the -Wall compiler option to look for subtle code issues.
+
+CHANGES:
+1. Passed and internal variables of solver_band_matrix.f are cleaned up.
+2. Removed the unused variables from zdem_loop.f.
+3. Moved variables in zdem_loop.f to solver_screamer_matrix.f that are only used there. Did not move nbm as it caused problems. Don’t know why.
+4. Moved variables iptold, iptime, nk from zdemloop.h to main_loop.f.
+5. Moved unused variables to main_loop.f
+6. nzz is only used in main_loop.f and solver_screamer_matrix AND it is defined in the first incidence in both routines. Remove from common and declared separately in both routines.
+* At this point I have cleaned up zdemloop.h.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+* Look at zdemvars.h because it is called in main_loop.f.
+7. Moved out all of the models common block /misc for models/ because these variables were only used in the model subroutine.
+8. Moved out all of the models common block /mdl_vars/ because these variables were only used in the model subroutine.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+9. Removed alertmsg.f from the list of subroutines as it is no longer used.
+10. Removed all of the tabs used as spaces throughout all subroutines as they are non standard. Used Grep “crtl+v <tab>” *.f to find all of the tabs. The -Wall warning in the compile caught all of the tabs.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+11. ERROR found in zdemcomm.h iswitch defined in integer but never placed in common. I placed in the correct location in common.
+12. ERROR in relcrrct.f, Error in real declaration, typo, missing comma between b6 and b7. Fixed.
+13. ERROR in nshlmdl.f, Error in line 262, line was too long. It was being truncated. Could have been the longstanding problem with that model.
+14. Modified usr functions to stop compiler warnings.
+15. Replaced declaration of newfile, oldfile, fflag from zdemout.h to mk files, write_outs.f, and start_run.f. This removes warnings from the compile.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+16. Removed time_flag (half_step, whole_step) from zdemparm.h where it was defined as an integer because time_flag was really only referenced in 22 subroutines, defined, used and passed from 9 routines and zdemparm.h was included 54 subroutines. time_flag was passed into 13 functions. Need to define half_step, whole_step as well and declare passed variables. This gave compiler warnings for unused variables. time_flag, half_step, whole_step explicitly defined as needed. Declaration critical since these variables are not intrinsic integers.
+17. ERROR Found a typo in routfl.f in which the passed variable was labeled timeflag rather than time_flag. timeflag was compared with half_time and whole_time in zdemparms.h. Because I greped for time_flag I did not put the explicit declarations in this routine and screamer failed on output. Fixed. Explicit declarations now in routine.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+18. Fixed complex math in yield.f.
+19. Removed unused variable cbtest from zposmdl.f. Initialized caclzflow = 0 to remove a compiler warning.
+20. Created a dummy use of the passed variable time in zflssmdl.f to remove a compiler warning.
+21. ERROR rstmitl.f Removed unused the variables edenomv1 and gg. Error rstmitl.f- fixed a typo on the real declaration of zmuo (was zmu0).
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+22. nsteps explicity integer in start_run.f
+23. Unused format statements commented out in echoindx.f and echosetp.f.
+24. Removed unused variable time2tdiff in pwlfunc.f
+25. The variable nvar_node is not initialized in start_run.f.
+26. Added ibktmp = ibk in setmzflo.f to prevent a compiler warning of unused passed variable.
+27. Added ibktmp = ibk in setadder.f to prevent a compiler warning of unused passed variable.
+28. Added dttmp = dt in rwallmdl.f to eliminate a compiler warning based on an unused passed variable.
+29. Itabnum is explicity declared integer and, finally, itabnum is initialized.
+*** Screamer tested at this point with Z51.txt and dyhohl_test.txt. Worked ***
+30. In nshelmdl.f initialized radt1 and velt1 - gave a compiler error.
+39. Explicit integer conversion in line 78 of mkufofl.f.
+40. In mksfcfl.f iday,imon,iyr removed from integer definition - unused, explicit integer conversion line 103.
+41. In mkcsvfl.f changed line 73 to explicit integer conversion.
+42. In mksfcfl.f no_text explicitly declared integer - initialized to 0.
+43. In mfiflmdl.f used cokuttmp = cout to avoid a compiler warning.
+44. In lsyswmdl.f diel1 uses explicit integer math in line 54. dcm1n unused and removed.
+45. In main_loop.f make calculation of iptime explicitly integer in three places.
+46. In findnode.f initialized ifnodreq to remove a compiler warning. ifnodreq is always defined in the body of the function.
+47. Found an error in start_run.f in which a character larger than *80 was assigned to buffer. I simply took the writebuffer call out of this error check.
+
+Benchmark: At this point we successfully ran the complete Benchmark suite.
+
+NOTE: At this point nshell_test.txt still fails. /Need for fix for next maintenance revision./
+
+NOTE: Screamer has always used explicit “real” variable declarations for all non-solver variables. (implicit real*4) The actual variables in the matrix solver have been and are explicit real*8. This made real sense in a 32-bit OS. Today Screamer is being compiled explicitly 64 bit for modern 64-bit systems and OSes. This means that the real reason for 32-bit real variables is now gone. Because Screamer is a code based on repetitive math, accuracy is very important. A future revision will take the entire code to real*8 and int*8 explicit variables. Because most Fortran compilers are implicit 32 bit, we need to explicitly declare variables 64 bit. I have chosen NOT to use the 64-bit compiler flag.
+
+
+
+V4.1.3 2015-06-09 NEW VERSION REPLACING PRIOR V4.1.3
+* This is a redo of the prior version. When I finished the output it would not work. I was going to repeat the changes one at a time until it breaks.
+*gFortran and gcc updated to V5.1 as of 2015-06-17
+
+1. Replaced the changes in dyhohlmdl.f, this had the fixes described below. I will conpile this version and test it on the dyhohl_test.txt. *** Runs with good output ***
+2. The double precision vector x was removed from main loop and the common block in zdemwork.h. This vector was not used anywhere.  *** Runs with good output ***
+3. The double precision variables raia, raic, riag, sum, aic, aig, cmx were removed from the common block in zdemwork.h. They are not used in this version of Screamer. *** Runs with good output ***
+4. The double precision variable a was pulled from common in zdemwork.h and defined directly in main_loop.f. It is passed to solver_screamer_matrix.f where it is populated. We define a as real*8 in solver_screamer_matrix.f. It is then passed to solver_band_matrix.f where it is used to generate the am_band matrix. *** Runs with good output ***
+5. The double precision variables bb and cc were eliminated from common in zdemwork.h and the screamer_solver_matrix.f. *** Runs with good output *** At this point but dyhohl_test.txt and Z51.txt work fine.
+6. The length of the character material was changed from *3 to *80 in rdscrdata.h to match field. This removes the warning that shows up due to the mismatched lengths in rdscrelem.f. The length in the write is limited to three characters in rdscrelem.f at line 2004.*** Runs with good output ***
+7 sfc_len increased to *25 in sfc.h to remove length warnings on compile. *** Runs with good output ***
+8.  In mkpfffl.f the length of pff_file was increased to *80 to match base_filename and to remove compile warnings.*** Runs with good output ***
+9. Removed unused dlfile char in getenvvr.f and removed the char inpfile from zdemenv.h and defined it separately as a passed variable in getenvvr.f. Decreased the char length of base_filename in zdemenv.h to 80 from 100 to mathc length in other places.*** Runs with good output ***
+10. The last two DP variables, am_band(max_am,max_am) and rhs_band(max_am), were removed from zdemwork.h and explicitly placed in main_loop.f. This is the only place they are used. *** Runs with good output ***
+11. Version number incremented.
+12. Defined internal variables in settrlin.f and inititalized the internal variables. *** Runs with good output ***
+13. Double precision math partially fixed in findzflo.f. Compile warnings removed.*** Runs with good output ***
+
+Note: Any attempt to take max_nodes to a value greater than 8190 causes some sort of memory overflow during the compile that wipes out the pointer to main_loop in zdem. A cursory review of zdem.f showed nothing. Somewhere there is a memory or size issue. It could be in some of the max values that are based on max_nodes. Perhaps an interger value excees the maximum size for a default integer value. A 4 byte integer’s largest value is 2,147,483,647 (signed)
+
+ld: 32-bit RIP relative reference out of range (2147547472 max is +/-4GB): from _main_loop_ (0x10000BB20) to _a.3183 (0x18001B600) in '_main_loop_' from screamer64.a(main_loop.o) for architecture x86_64
+collect2: error: ld returned 1 exit status
+
+Is RIP the register instruction pointer? It should be 64 bit as I am trying to compile 64 bit.
+
+NOTE: This is what I saw before. There seems to be some integer value that goes out of range in main_loop.f. A test of memory with a simple array.f test program shows no memory limit for creating a large array and then operating on it.
+
+Note: Max_nodes = 7400 gives a memory requirement of slightly more than 2 GB. This is the limit for Windows machines.
+We can go up in max_nodes ot 8190 (2.4 GB) on the Mac before there is a *4 integer overflow somewhere in main_loop.f.
+
+Note: using -m64 in the fortran compile or using -mcmodel=medium in the final g++ link makes no difference.
+
+
+
+V4.1.3 2015-03-30 OLD////NOT USED
+*This is a maintenance release with no new features.
+*There are serious problems compiling Screamer V4.1.2 in Windows with an array larger than 2 GB in common. The compile fails with an am_band array that is 2.05 GB if dimensioned for 7500 nodes.  Arrays in common are treated as allocations in static memory and must be placed in the lower 2 GB of RAM in Windows systems.
+*Comments on the web indicate that the problem is the array in common. It turns out that we put the am_band array in common but there was really no need to do that as the only routine with am_band in it is main_loop.f. The apparent solution is to pull am_band and rhs_band out of common and define them in main loop. The matrix generator and solver pass the the arrays using preferred Fortran techniques.
+ 
+*** Changes ***
+
+* The double precision vector x was removed from main loop and the common block in zdemwork.h. This vector was not used.
+* The double precision variables raia, raic, riag, aic, aig, cmx were removed from common block in zdemwork.h
+* The double precision variable a was pulled from common in zdemwork.h and defined directly in main_loop.f. It is passed to solver_screamer_matrix.f where it is populated. It is then passed to solver_band_matrix.f where it is used to generate the am_band matrix.
+* The double precision variables bb and cc were eliminated from common and the screamer_solver_matrix.f.
+* The double precision variable sum was pulled from common as it was not used anywhere that I could find.
+* Removing the unused variables has sped up Screamer by 5%.
+* The length of the character material was changed from *3 to *80 in rdscrdata.h to match field. This removes the warning that shows up due to the mismatched lengths in rdscrelem.f. The length in the write is limited to three characters in rdscrelem.f at line 2004.
+* sfc_len increased to *25 in sfc.h to remove length warnings on compile.
+* In pffmkpfffl.f the length of pff_file was increased to *80 to match base_filename and to remove compile warnings.
+* Found a typo in dyhohlmdl.f that impacted accuracy of the subroutine. router3 was used instead of router and there was a typo in the following logical in which an extra ‘and’ was placed after router. These were fixed. Runs now.
+* Removed unused dlfile char in getenvvr.f.
+* Defined iptime in main_loop.f explicitly integer. Not needed. Defined in zdemloop.h. iptime is only used in main_loop.f. iptold is also defined in zdemloop but is only used in main_loop.f.
+* Defined internal variables in settrlin.f and inititalized the internal variables.
+* Double precision math partially fixed in findzflo.f. Compile warnings removed.
+
+—>> screamer worked at this point and failed after
+* The common variables, v, vold, vsour, zir, zirn, zirold, zib, zlrechk, and cechk, in zdemwork.h are now defined real*8. Reduced the floor in solver_screamermatrix to 1e-8 because the DP variables can handle it. Also cleaned up DP math since we are mixing DP and SP numbers. I notices that the order of the variables my be a problem.
+* In zdemwork.h I converted the current and voltage variables to double precision. A large number of warnings creep in due to most of the other variables still being real*4.
+* all voltages and currents related to the use of real*8 v, vn, zir, zib, have been replaced with real*8. Outputs and generation of variable loss resistance is left SP.
+
+NOTE: The only items that are not DP are the time step, ht, the inverse time step rht, and half the time step ht2. These should be considered the next step to DP.
+
+NOTE: screamer compiles under gFortran with NO errors or warnings.
+
+NOTE: Consider the nshell model to be non-operational in this version.
+
+NOTE: That legacy code in solver_screamer_matrix.f calculates legacy values of bb and cc. These coupling coefficients are recalculated in the am_band matrix in solver_band_matrix.f. Note, the variables bb, cc are calculated but never used and x is used as a swap vector for the solution rhs_band. The array x is never used anywhere else we can dispense with the do loop and replace x with rhs_band in two places. In addition, the variables raia, raic, riag, sum, aic, cmx are not used anywhere in the code. The variable a that is in common in zdemwork.h is used only in solver_screamer_matrix.f and is passed to solver_band_matrix.f We can define it in main_loop.f and pull it out of common.
+
+Note: Any attempt to take max_nodes to a value greater than 8175 causes some sort of memory overflow during the compile that wipes out the pointer to main_loop in zdem. A cursory review of zdem.f showed nothing. Somewhere there is a memory or size issue. It could be in some of the max values that are based on max_nodes. Perhaps an interger value excees the maximum size for a default integer value. A 4 byte integer’s largest value is 2,147,483,647 (signed)
+
+
+V4.1.2 2014-12-12
+*This version adds a lossy transmission line to Screamer. 
+*Add lossyline keyword and variable in zdemparm.h, lossyline = 37 and k_lossyline = ‘LOS’.
+*Added comments to start_run.f. These had been lacking for several blocks. I also added the lossy line switch that sends one to setup_trlin.f. Finished the modification comments.
+*Add lossyline to settrlin.f
+* Modify the readscrelement.f, setups to include a new command Lossyline, with a new total series resistance and an effective dielectric loss to ground. Based on the TL routine without the linear or exponential options. I documented the changes in the comments. I duplicated the TRline section and used it for lossy line with minor changes. I loaded all of the input parameters into the ‘pin’ matrix. I only allowed a linear transmission line and limited the inputs to six parameters.
+*setup_trlin.f was modified to input the needed parameters for the lossy line. The modification block was updated. The input parameters were read in from ‘pin’ up to 6 parameters. Zout and tres are still optional. I defined the series resistance R2 for the entire line and defined the shunt resistance R1 for the entire line. These values are broken up depending on the TL resolution. The actual loss values that are inputted into the TL values are R2 (series) and G1 the shunt conductance.
+*The version number was updated.
+*I created lossytl_test.txt to test the routine. Everything seems to be working correctly.
+*The manual was updated.
+
+NOTE: I found a transformer block that was stubbed out. The information is read into the code and zdemmax.h sets max_transformer = 5. zdemparm defines the transformer integer variable and the chaacter k_transformer = ‘TRA’. zdemwork.h has an indextrnf. zdemclr.f clears the variables for the transformer. start_run.f has a comment for the transformer block. Other than this there is no setup for a tranformer nor are there any calculations done. The transformer indices in indextrnf are create in zdemwork.h and cleared in zdemclr.f. Nothing else.
+
+V4.1.1 2014-12-12
+* There were some code fragments in zdemmax.h relating to the intermediate solver steps that I commented out. I also changed the compiling deck to remove links to LaPack.
+* I noticed that the array size for the new am array was set at bb_max X bb_max. This is vastly larger than the 2*max_nodes X 2*max_nodes that is really required for the array. Similarly, the rhs vector was also dimensioned at bb_max. It should be set at the same 2*max_nodes. Right now the only place this really crops up is in the two solver routines that pass the vectors and pass bb_max. I will change that. 
+*Tests were successfully conducted with the run deck branch_4L2_4L3.txt.
+
+V4.1 2014-11-16
+*Version created to use a new general gaussian solver.
+*branches in branches established with the modifications to Start_run.f in which the node pointers for the branch coefficients were corrected.
+* Solver implemented with changes in Main_loop.f and the addition of the “solver_*” routines. There is a linear gaussian solver implemented. There is a matrix generator implemented that creates the 2-D problem A matrix in clear form. The old Screamer vector populator was broken out into a separate subroutine.
+*Tests were successfully conducted with the run deck branch_4L2_4L3.txt.
+
+V3.3.3 beta 2014-11-14
+This was the beta that was set up to modiy transmission lines into lossy lines.
+Minimal work was done. Further work will be done in V4.
+
+V3.3.2 2014-10-10
+* This version will add a multiple liner model imploding on a uniform fill (based on the gas puff model with two liners).
+* The existing gas puff model and the new DYHOHLmdl.f model will be carefully vetted. I already note a redundant definition of the number of parameters in var_model. While this does not break the subroutine, because the value is fixed at 16 (gaspfmdl.f), it could cause problems. In addition, in MANY places model.f passes parameters from VAR_MODEL to subroutines using a kludge in which the first index (rows) is set to 1 and the second index (column) is set to ivar, the variable of interest. This effectively passes the contents of the entire column to the subroutine. In reality, it is passing the pointer to the memory location of the first element in the column. The calling subroutine uses a implicit array definition (parms(*)) to dimension the variable parms to match the size of the column. This is totally OK except the pass is not good programming technique. The transparent way to do this is to load the contents of a temp vector with the column contents of VAR_model in a simple do loop that first zeros the contents and then fills them. We already have max_var_parms set to 40 in zdemmax.h. We should be using this parameter as the bound for all passed values where possible. A clean, well dimensioned array in one subroutine can be passed with a implicit size (*) with no problem. In zdemcomm.h, var_model(max_var_parms, max_var_elem). This means that any subroutine that calls this will have var_model tightly defined.
+*The gas puff model has been tested with gas_puff_test.txt and found to work properly.
+*Created dyhohlmdl.txt from gaspfmdl.txt.
+*NOTE: Error found in gaspfmdl.f. Line 203 was, masst1 = massri. This did not include the value of initmass. Once the radius of the imnplosion gets below innerr the total mass should be masst1 = massri + initmass. Line 203 was fixed.
+*zdemparm.h modified to add dyhohlraum nblock ID.
+*rdscrdat.h modified to increase the size of max_fields to 12.
+*dyhohlmdl.f created based on gaspfmdl.f. Two shells added.
+*dyhohlprm.f created based on gaspfprm.f. Additional parms added for shell flags.
+*models.f modified to include the new dyhohl block.
+*rdscrelem.f modified to read in the dyhohl block info
+*version incremented to V3.3.2
+
+V3.3.1
+2014-05-13
+* This version fully implements David Reisman’s request for an input data table that is linked to switch times in the Decay model. It is also available in the Exponential and rise model.
+* All subroutines were checked for implicit real variable definitions. There may be a few I missed but most real calls are explicit right now and we can go to *16 double precision as needed.
+* A complete run was made of all of the test files to see if they worked. Everything was fine.
+* V3.3.1 is now released.
+
+V3.3.1
+2014-05-01
+* A V3.3.1_beta folder has been created.
+* I started with a 32-bit screamer benchmark against V3.2.7. The benchmark was good.
+1. Added a new size limit of 40 for max_switch_points in zdemmax.h. 
+2. Created a new real vector in zdemcomm.h sized to max_switch_points - switch_time
+3. Added new name for input in zdemparam.h — switch_time, we already have TAB and LAS defined so we are set to input data. The three letter short cut is SWItch_times
+4. We need to have an “else if” in the rdscrparam.f to look for the SWI input. If SWI found this traps in the do loop to keep reading until LAS found. I can use a new subroutine readvector.f based on rdtbl.f to read the points in.
+5. Initialized switch_time vector values to 0.0 in rdscrparam.f
+6. Created a new subroutine that reads in a vector of numbers with each number on a single line. This allows flexibility to increase the points as needed. The subroutine name is rdvector.f. rdvector.f compiled.
+7. Include a test print in rdvector.f to test the input capability.
+*** Potential bug detected: the new rdvector.f and the rdtbl.f independently define the size of the vector “field” with the parameter max_fields = 10. getnxtln.f ALSO defines the passed array by independently using a parameter definition for max_fields. The same thing happens in the subroutine getfield.f that is called from getnxtln.f. This leads to the potential for “field” to be a different size in the different subroutines if zdemmax.h changes the definition of max_fields. “Field” should be passed with a character field(*) to eliminate this possibility. 
+*** In addition, “field” is defined to be *80 long in each location. The length of “field” should be passed as well.
+*** At this point the program compiles and has read in the input table!! I wrote a short test file input_vector_test.txt.
+* I replaced the array size definition and the character length in getfield.f as a test by using the command “character*(*) field(*)”. In this command, character*(*) passes the length of the character from the calling routine and field(*) sets the array size. This compiles and seems to work.
+*** getfield.f also passes an integer variable “num_fields” with an integer*4 length. If the length of the integer in the calling routine is changed this will break the program by defining different integer lengths.
+* Various passed characters now have the length passed as character*(*) rather than defined in the subroutine.
+* Various integer*4 replaced with integer.
+* getnxtln.f now is passed max_field, max_field still must be defined in all of the calling routines. Code runs. 2014-05-07.
+*** How many places is zdemenv.h called? Lots.
+8. Added svariable and SVA to the command list in zdemparm.h
+9. Added another option to rdscrelem.f in which one looks for the command SVA. In SVA I allow RLseries and RCG to have switched times. The models that are allowed are the exponential model and the decay and rise models.
+10. Created switch_table_test.txt to test the ability to use an input table for swtich times. The deck ran and the log file and the output file worded as expected.
+* All F90 character definitions removed. Pure F77.
+* Each subroutine has its passed and internal variables explicitly defined.
+
+V3.3
+2014-04-11
+*I added an explicit real definition in the common blocks in zdemvars.h and zdemwork.h. This was the only real common blocks that did not real variables not explicitly defined. I also explicitly defined integers and real in other *.h files. All of the *.h files were examined for explicit variable definition.
+* in zdemvars.h the variable htd2 was not included in the explicit real definition. This was fixed.
+* Any of these issues could have caused the differences in the compiled real*8 tests earler. In any event, these were all good programming techniques.
+
+V3.3
+2014-04-04
+*V3.3 is now golden. Even though we have removed all real*4 calls, I don’t recommend running Screamer with the 64-bit switch in the compiler. 
+*David Reisman has confirmed that the variable inductor model works. I have now taken 3.3 off beta.
+*I added drdt into the zdemvars.h real and common declaration. This fixed a problem in the PC compilation of Screamer in which many of the variables were NaN.
+*I fixed calcslope.f to initialize calc_slope everytime the function is called. This was a good programming proctice as calcslope.f is a function and we should initialize functions.
+*I carefully defined slope as a real in gettblvl.f since these are passed variables.
+
+V3.3 Beta
+2014-03-25
+*The L2 variable inductor option was inplemented incorrectly below. The value of dL/dt was wrong. calcres.f calculated the value of the resistance (or inductance) interpolated from the input table as a function of time. This function uses the slope between points as part of the interpolation routine. I copied calcres.f into calcslope.f. The second function generates the slope of the table at the time of interest. That slope inputted into gettblvl.f and is scaled properly if a scaling factor is used in the table input. Subroutine gettblvl.f was modified to pass the calculated slope to subroutine models.f. In model the slope (drdt) is used as part of the energy check and in the circuit solver as a dissipative element.
+*I removed the space in the first time label (Time (s) to Time(s)) as this space impacted the parsing of the columns in Kaleidagraph when a greater than or equal to a single space was used. Two spaces was a problem as in some cases the numeric columns were separated by only one space.
+
+V3.3 Beta
+2014-03-11
+*In rdscrelem.f there was an error in which nublk was used in a write(9,-) rather than the correct nublks. This caused a *** in the output log file. This error was propagated into a number of variable resistor models. This was likely due to a cut and paste propogation of a single error. This has been fixed!
+*In rdscrelem.f, a variable inductor is now allowed in RLS. Note that a variable inductor can be effectively dissipative and that care must be taken in the energy balance calculation. The log output file now shows the variable table with the correct inductor or resistor label.
+*In models.f I added the check for L2 as the allowed second parameter in the command line. I added the inductor values in the variable resistor table model.
+*Cosmetic changes were made to rdtbl.f.
+*Test run decks were created for testing variable resistors and inductors.
+
+
+V3.3 Beta
+2014-02-09
+*Note: I have noticed that in zdemout.h the number of variables defined in the real*4 definition for multiple shells does not match the variables in the common block. I think that this is an error in the multiple shell routine.
+*The program runs in double precision and seems to generate output that is slightly more accurate than single precision. This usually shows up in the 4-5th decimal place of any value. The problem I see is very small numbers (< -1e-99) show up with three exponent values and drop the E when the output is 1PE12.4. If you follow the value during the computation, the instant it gets large enough it changes to the standard format. I may have to go to the variables that are being output and hard wire them to real*4.
+*I have replaced all hard real*4 calls in all Screamer subroutines with a real definition. This allows the code to run in 64 bit precision for ALL variables by changing the compiler. I have noticed that doing this results in the following issues: wall2_test.txt gives a different answer in 64 compilation; TL_test.txt shows very small numbers in I_TL for the first few numbers, after that the agreement is good; LTD_DTRA_A.txt gives slightly different values in ITRIN@,P,E., All the others look the same; Dillon_TL.txt the time points are not the same in the print file, this is strange as the # of printed points is the same.
+
+V3.2.7 Final
+2013-12-08
+*Change the R2Wall_model to have arbitrary cylindrical and disk segments with different lengths (cylinder) and different radii start points (disk), changed R2_Wallmdl.f and rdscrelem.f.
+*Modified mkufofl.f as I did with mkcsvfl.f to remove the .txt from the name of the output file, this solved the problem of a multiple extension on the Mac and LINUX systems (e.g. .txt.ufo) and solved the problem of the final extension being dropped on Windows systems (e.g. .txt.ufo showed up as .txt thereby overwriting the original run deck.
+*format statements stripped from mkcsvfl.f and mkufofl.f.
+*output numeric format changed to 1PE11.4 in mkcsvfl.f
+*Spaces added and output variable name increased in mkufo.f
+*Modified get_next_line: Error noted when the comment line in the run deck was longer than 79 characters. This was due to a change in the fortran compiler that became more stringent in format length calls. I found a read format for currline in get_next_line that was A80. As currline was defined to be *120 in the rdscrdata.h and in some called subroutines this was an error. I changed the read format to A120 to keep the agreement in character lengths. This solved the problem.
+*All test cases were run successfully.
+*Incremented the version
+
+
+V3.2.6
+2012-04-10
+*Added a new version of R2WALL using the latest version of wall losses generted in Stygar's paper. Added R2Wall to zdemparm.
+*I caught an error in the old Rwall model located in models.f as these simulate the R2 resistor and the calculated resistance must be placed in the ith node not the jth node used in R1 variables.
+* I also noted a number of minor errors in the code that have been fixed. These include wrong number of spaces before a standard fortran call (4 vs. 6) and subroutines that are internally mislabeled but run correctly. (rdscrdata).
+*I fixed the dangling commas in the csv outputs. It involved a tricky use of the suppress line feed and forcing a line feed with a null write!
+* I created a new subroutine that generates the filename w/o extension.
+* I fixed the duplicated extension on the csv output. I need to do the same for ufo.
+* I fixed the log file extension issue and totally cleaned up the subroutine.
+
+V3.2.5
+2011-04-20
+* Removed 41 Format on the write statement in rdtbl.f.
+Will Change rwall.f to use the latest version of the Stygar wall lass model
+
+V3.2.4.3
+2008-12-08:RBS
+*Many formats contained in zdemfmt.h have been included in the individual write statements. No format pointers needed.
+*The error message if a bad input file name is used was fixed in getenvvr.f.
+2008-12-5:RBS
+*I removed the call for 16 format in rdscrelem.f. There are at least two more formats that can be cleaned up later.
+*In rdscrelemiit.f I added back the format info for the write. This eliminated the need for the zdemfmt.h call and clarified the formatting used on the spot. The use of passed format information is generally not appropriate. The zdemfmt.h call was removed.
+2008-11-07: RBS
+*Broke up Start_run.f to remove banner_start.f from that subroutine and create a separate subroutine. Cleaned up the write statements and removed unused variables.
+*Rewrite of end_run.f to clean up writes, removed unused variables and other calls. Fixed the bugs in the log file related to end_run.f.
+*Added definition of echoln in rdscreleminit.f to fix banner call error showing up on the log file. Fixed a missing return.
+*Removed reference to echoln in rdscrdat.f. This content moved to rdscreleminit.f.
+
+2008-11-05:RBS
+*writebuffer cannot handle a character with a '/'. Removed to eliminate the Fortran Run Time errors.
+*all warnings in compile eliminated by removing dangling go to's and placing error trap outs in the if statements. There was no functional change but warnings are now gone!
+2008-09-10: RBS
+*redefined buffer to a char length of 80 throughout subroutines
+
+V3.2.4.2
+2008-09-07: RBS
+       *subroutine "rwallmdl" modified to use most recent Stygar formula based on Stygar memo dated 29 Sept 2005 (Ken Struve)
+       *subroutine "rwallmdl" modified to fix gFortran warning dimension (1) changed to dimension(*)
+       *statically compiling with QT on Solaris need the "-z nodefs" linker flag (see http://docs.sun.com/app/docs/doc/817-3677/6mj8mbtb8?a=view and http://www.deer-run.com/~hal/sol-static.txt)
+       *tried to compile with linker load time optimizations (see http://lwn.net/Articles/192624/), activated by using the "-Wl, -O1" flags. We will see if it really makes a difference for us
+       *reminder: in order to get nice looking icons, suppress "qmake_image_collection.cpp" before recompiling (it must be endian-sensitive so it gets messed up accros plateforms).
+
+2008-09-06: RBS
+	* The default value for max_nodes was changed to 7500 from 1000, the default value for max_trline_nodes was increased to 6001 from 501, the default value of max_trline was increased to 6000 from 500. This allows higher resolution calculations for long TLs.
+	* Error is settrlin.f in which na was compared with max_trline_nodes rather then max_trline. max_trline_nodes is +1 larger than max_trline. Actually the check was if na was .gt. max_trline_nodes. Thus, the code would allow na = max_trline_nodes. I changed this to .ge. max_trine_nodes to require that na be smaller than max_trline_nodes (hence, equal to max_trline).
+	*Note: high frequency ringing observed on TLs. Period about 10X TL resolution.
+
+2008-07-17: RBS
+	*currline was defined two different lengths 120 in the .h file & getnxtn and 80 elsewhere - changed to 120
+	*eliminated the segmentation fault in var R1
+
+2008-07-16: RBS
+	*gFortran caused numerous problems - fixed Date_time issue
+	*gFortran broke the use of Dimension (1) needed to be replaced with (*)
+	*rdchklimits & rdscreleminit did not include zdemout.h, both subroutines used "numout" but the info was not passed, fixed
+
+2006-06-09:
+	*code cleanup: the subroutine reading the input file (rdscrdat.f) has been split into 6 newly created subroutines as well as a new common bloc for the data shared amongst all code that was in the old rdscrdat. A new header file has been created, rdscrdat.h. The file rdscrdat.f went from 3089 lines down to 57 active lines (132 total, with 75 lines of comments).
+	*some compiler dependant code cleanup;
+        *when the input file contains invalid line, the error signal comes back all the way to the main routine, allowing for a clean exit of the program (the "stop" command that was used before was stopping the GUI too);
+        *a couple more error messages have been added so the user can understand better why his simulation is not running.
+        *some error messages redirected to the write buffer, so they can be printed in the console and in the GUI.
+
+2005-02-23:
+	*code cleanup: removing platform/compiler specific code (not needed anymore, we are using g77 everywhere);
+	*stdout writes are now done using a buffer (enabling redirecting these writes to the QT interface);
+
+2004-11-23:
+	*code cleanup: cleaning up unused variables (they were generating warnings);
+	*code cleanup: deleting commented sections about "tmp file size" dialogs (not relevant for today's computers);
+	*code cleanup: moving models in a new subroutine, get_models. That subroutine is in file models.f and file zdemvars.h contains new common blocs for data exchange between zdem and models;
+	*output: added a "#" in front of the title line of the output file;
+	*code cleanup: moving the calculation loop in main_loop.f. Associated header file: zdemloop.h;
+	*code cleanup: moving initial display code in "banner_start_run";
+	*code cleanup: moving final display code in "banner_end_run";
+	*code cleanup: moving the intitializations in "init_problem";
+	*Makefile: added several options to FFLAGS (such as inlining of functions for the compiler to undo everything we did !)
+	*ability to give the input deck file name on command line (in getenvvr.f);
+	*changes in the formats of several outputs (cosmetic changes);
+	
+Version 2.2:  
+MLK, 03/07/95, Change include filenames to be 8 characters or less 
+               lines 85,530,541,552,892,1752,1754 were split so they
+               are less than 72 characters
+KWS, 05/30/95, Modifications for Zflow Plasma Loss Model
+MLK, 06/07/95, Added modifications for CSV output type
+MLK, 06/27/95, Modified output statements to be more generic
+               and make log file more readable on-line
+MLK, 08/21/95, Added timing routines for DOS-Leahy because UNIX/MAC
+               version was not compatible
+MLK, 01/15/96, Added argument to get_variable call for referencing
+               the "pin" array directly within that subroutine
+MLK, 02/14/97, Added machine dependencies for MS Powerstation version
+               and cleaned-up timing sections
+KWS, 08/13/97, Fixes to Zloss and POS models to allow using in branches that
+               run backwards.  Also added MZFLOW block to find cathode and
+               plasma currents and zflow in a MITL
+MLK, 01/05/98, Added modifications for SFC output type and to print the
+               SCREAMER title (Name+version) from a string in a header file.
+KWS, 01/06/99, Changed RWALL model to agree with new W. A. Stygar model
+JAM, 03/18/04, Commented out preprocessor if defined statement and machine
+               dependency section to compile with g77. Commented references
+               and statements related to ABSOFT, PFIDL
+JAM, 04/15/04, Changed output timer variable to reduce output to screen
